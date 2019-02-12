@@ -1,0 +1,17 @@
+PlotCombo <- function(subnum,session,data) {
+  if(!(is.na(subnum) & is.na(session))){
+    print(dim(data))
+    newDf <- filter(data,subnum %in% subnum,session %in% session)
+    print(dim(newDf))
+    if(dim(newDf)[1]==0){
+      plot(0,type = 'n',axes=FALSE,ann=FALSE)
+      text(1,0,"No data available")
+      warning("No data for given input arguments")
+    }else{
+      meanRT <- aggregate(data$rt,by=list(data$trial),mean)
+      plot(meanRT)
+    }
+  }else{
+    warning("Input arguments contain NULL values")
+  }
+}

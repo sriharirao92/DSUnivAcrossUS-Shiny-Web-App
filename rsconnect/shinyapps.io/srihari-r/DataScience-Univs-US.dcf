@@ -1,0 +1,10 @@
+name: DataScience-Univs-US
+account: srihari-r
+server: shinyapps.io
+appId: 125676
+bundleId: 567236
+url: https://srihari-r.shinyapps.io/DataScience-Univs-US/
+when: 1474742672.95103
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: cb_2015_us_state_20m.shp|list.css|data/DataScience_Univs.csv|data/shanghaiData.csv|data/timesData.csv|www/bootstrap.css|www/list.css

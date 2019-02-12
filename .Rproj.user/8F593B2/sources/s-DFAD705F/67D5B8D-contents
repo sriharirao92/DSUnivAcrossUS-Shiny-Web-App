@@ -1,0 +1,603 @@
+##  Code for Book: Applied Statistical Analysis in R for Psychology and Human factors
+##  (c) Shane T. Mueller, Ph.D.
+##  Michigan Technological University
+##  shanem@mtu.edu
+##
+##  Textbook and videos available at http://pages.mtu.edu/~shanem/psy5210
+##
+##
+## This file contains example software code relevant for Chapter 1 (Introduction)
+## The code in this file may be used and shared freely with or without attribution.
+## The original vioplot function was licensed via the BSD license.
+##
+
+
+
+## Pie charts considered harmful
+##blech:
+pie(c(3,5,9),c("Dogs","Cats","Fish"))
+##see http://peltiertech.com/use-dot-plots-for-better-categorical-comparisons/
+
+cols <- c("red","red3","orange","gold","yellow","white")
+## what's worse than comparing category sizes between pie charts? Comparing them between two pie charts
+#pdf("c5-pets1.pdf",width=6,height=4)
+par(mfrow=c(1,2))
+pie(c(3,5,9,3,5,9),c("Dogs","Cats","Fish","Gerbils","Horses","Rocks"),main="Pet Cemetery",
+    col=cols)
+pie(c(5,5,2,3,3,1),c("Dogs","Cats","Fish","Gerbils","Horses","Rocks"),main="Pet Cremetorium",
+    col=cols)
+#dev.off()
+
+#pdf("c5-pets2.pdf",width=7,height=7)
+##stacked bar compares area, but is easier to judge:
+data <- cbind(c(3,5,9,3,5,9),c(5,6,3,4,3,4))
+rownames(data) <- c("Dogs","Cats","Fish","Gerbils","Horses","Rocks")
+colnames(data) <- c("Cemetery","Cremetorium")
+
+
+xs <- barplot(data,legend=F,col=cols,
+              ylim=c(0,40),
+              main="Pet Burial Methods")
+
+#  args.legend=list(x=2,y=60,bty="n")              )
+
+yvals <- apply(data,2,cumsum)
+yv2 <- (rbind(yvals,0)+rbind(0,yvals))[1:6,]/2
+
+
+text(xs[1],yv2[,1],rownames(yvals),cex=.8)
+text(xs[2],yv2[,2],rownames(yvals),cex=.8)
+
+dev.off()
+
+
+
+###########################
+## Dot charts: An alternative
+
+
+##do it 'by hand'
+#see http://peltiertech.com/use-dot-plots-for-better-categorical-comparisons/
+
+
+## what's worse than comparing category sizes between pie charts? Comparing them between two pie charts
+
+
+
+
+##do it 'by hand'
+#pdf("c5-dotchartpets.pdf",width=5,height=6)
+matplot(data,1:6,pch=16,xlim=c(0,10),ylim=c(0,8),
+        yaxt="n",xaxt="n", cex=1.5,
+        xlab="Number of pets",ylab="",
+        type="o",line=3)
+
+segments(0,1:6,10,1:6,lty=3)
+axis(2,1:6,c("Dogs","Cats","Fish",
+             "Gerbils","Horses","Rocks"),las=1)
+legend(1,8,c("Pet cemetery","Pet cremotorium"),
+       lty=1:2,pch=16,col=1:2,bty="n")
+title(ylab="Pet type",line=4)
+axis(1,0:10)
+#dev.off()
+
+
+##dotchart makes a creditable but simple alternative
+dotchart(data,labels=c("Dogs","Cats","Figs","Gerbils","Horses","Rocks"))
+
+##how about a larger example:
+
+x <- read.table("aflcio-votes.txt")
+#pdf("c5-dot1.pdf",width=8,height=11)
+par(mfrow=c(2,2))
+votes <- x[,3:21]
+senator <- paste(x$V1,x$V2)
+votes2 <- rowSums(votes=="R") ##Recode for voting ???Right???
+dotchart(votes2)
+dotchart(votes2,labels=senator)
+dotchart(votes2,labels=senator,groups=x$V2)
+dotchart(votes2,labels=senator,groups=x$V2,cex=.5)
+#dev.off()
+
+##play with the order:
+#pdf("c5-dot2.pdf",width=6,height=11)
+ord <- order(votes2)
+dotchart(votes2[ord],labels=senator[ord],cex=.5,
+         col=c("blue","gold","red")[x$V2[ord]],
+         pch=15)
+#dev.off()
+
+
+
+
+################################
+## Advanced graphics: error bars:
+
+set.seed(100)
+x <- rep(1:5,each=25)
+y <- x *3 + sqrt(x)*rnorm(25*5)*8 + runif(25*5)*3
+
+se <- function(x){sd(x)/sqrt(length(x))}
+
+means <- aggregate(y,list(x),mean)
+sds <- aggregate(y,list(x),sd)
+ses <- aggregate(y,list(x),se)
+
+#pdf("c5-errorbars.pdf",width=9,height=5)
+par(mfrow=c(1,3))
+
+##plot the means:
+plot(x,y,pch=16,cex=.8,col="darkgrey",xlim=c(0,5))
+points(1:nrow(means),means$x,cex=1.2,col="red",pch=16)
+
+##plot a singe error bar, based on se and sd:
+arrows(1,means[1,]$x+ses[1,]$x,1,means[1,]$x-
+         ses[1,]$x,code=3,angle=90,length=.1,lwd=2)
+arrows(1,means[1,]$x+sds[1,]$x,1,means[1,]$x-
+         sds[1,]$x,code=3,angle=90,col="red",lwd=2)
+
+##In one fell swoop:
+plot(x,y,pch=16,cex=.8,col="darkgrey",xlim=c(0,5))
+points(1:nrow(means),means$x,cex=1.2,col="red",pch=16)
+
+arrows(1:nrow(means),means$x+ses$x,1:nrow(means),means$x-
+         ses$x,code=3,angle=90,length=.1,lwd=2,col="blue")
+
+
+
+##more of a box-plot with +/- 1 sd:
+diff <- .2
+plot(x,y,pch=16,cex=.2,type="n",xlim=c(0,nrow(means)+1),xaxt="n")
+rect(1:nrow(means)-diff,means$x-sds$x,1:nrow(means)+diff,means$x+sds$x,col="grey")
+points(x,y,cex=.8,pch=16)
+segments(1:nrow(means)-diff,means$x,1:nrow(means)+diff,means$x,lwd=3)
+axis(1,1:nrow(means))
+
+#dev.off()
+
+
+############################
+## Some built-in libraries
+#Run these or install via RStudio interface if necessary:
+#install.packages("plotrix")
+#install.packages(c("caTools","gplots"))
+library(gplots)
+library(plotrix)
+
+##notice that they both have a function called plotCI:
+??plotCI
+
+#plotCI(1:nrow(means),means$x,ses$x)
+##almost identical, with identical names:
+#pdf("c5-plotci1.pdf",width=8,height=8)
+par(mfrow=c(2,2),mar=c(4,5,3,0))
+plotrix::plotCI(1:nrow(means),means$x,ses$x,main="plotrix plotCI")  # like this one better
+gplots::plotCI(1:nrow(means),means$x,ses$x,main="gplots plotCI")   # this one not as good
+
+
+plotrix::plotCI(1:nrow(means),means$x,ses$x,add=F,lwd=2,cex=1.2,sfrac=.04,col=1:4,
+                pch=16, main="plotrix plotCI with additions ")
+
+##gplots needs to be loaded:
+plotmeans(y~x,main="Gplots plotmeans") #give it the original data!
+#dev.off()
+
+
+###################################
+##Adding error bars to barplots:
+
+#pdf("c5-barerror.pdf",width=9,height=5)
+par(mfrow=c(1,3))
+##This doesn't quite work:
+barplot(means$x,col="navy")
+plotCI(1:nrow(means),means$x,ses$x,add=T)
+
+
+##Try this:
+newx <-barplot(means$x,names=letters[1:nrow(means)],col="navy",ylim=c(0,max(means$x) + max(ses$x)))
+print(newx)
+#I don't like this:
+plotrix::plotCI(newx,means$x,ses$x,add=T,lwd=2)
+
+
+##try #3. Add two versions of the error bars with a white outline
+newx <-barplot(means$x,names=letters[1:nrow(means)],col="navy",ylim=c(0,max(means$x) + max(ses$x)))
+
+gplots::plotCI(newx,means$x,ses$x,add=T,lwd=2.5,type="n",gap=0,col="white")
+gplots::plotCI(newx,means$x,ses$x,add=T,lwd=1.5,type="n",gap=0,col="black")
+
+#dev.off()
+
+
+
+
+
+############################################
+##  Advanced boxplotting
+## organize groups by color and axis
+
+#pdf("c5-boxplot1.pdf",width=9,height=8)
+par(mfrow=c(2,2))
+boxplot(len ~ supp, data=ToothGrowth, notch=F,
+        col=(c("gold","grey20")),
+        main="Tooth Growth", xlab="Supplement") 
+#plot by dosage
+boxplot(len~dose, data=ToothGrowth, notch=F,
+        col=(c("gold","grey20","hotpink")),
+        main="Tooth Growth", xlab="Dose") 
+
+#plot by both factors
+boxplot(len~ supp+dose, data=ToothGrowth, notch=F,
+        col=(c("gold","grey20")),
+        main="Tooth Growth", xlab="Supplement and Dose") 
+
+##Change the order--the color is bad here--can you fix it?
+boxplot(len ~ dose+supp, data=ToothGrowth,
+        col=  c("gold","grey20"),
+        main="Tooth Growth", xlab="Supplement and Dose") 
+
+#dev.off()
+
+
+#pdf("c5-boxplot2.pdf",width=9,height=5)
+par(mfrow=c(1,3))
+boxplot(len~dose*supp, data=ToothGrowth, horizontal=T,
+        col=(rep(c("grey20","gold"),each=3)),
+        main="Tooth Growth", xlab="Suppliment and Dose") 
+
+
+
+
+
+#make two sets of toothgrowth
+
+tooth2 <- rbind(ToothGrowth,ToothGrowth)
+
+tooth2$rep <- rep(1:2,each=nrow(ToothGrowth))
+tooth2$len[tooth2$rep==2] <- tooth2$len[tooth2$rep==2]+5
+
+boxplot(len~supp*dose*rep, data=tooth2, notch=F,
+        col=(c("gold","grey20")),
+        main="Tooth Growth", xlab="Supplement and Dose") 
+abline(v=6.5)
+
+
+
+
+x<-boxplot(len~supp*dose, data=ToothGrowth, 
+           col=(c("gold","grey20")),
+           main="Tooth Growth", xlab="Supplement and Dose",
+           xaxt="n",ylim=c(0,43)) 
+text(c(1,3,5)+.5,c(40,40,40),paste("Dose:\n",c("0.5","1.0","2.0")))
+legend(5,15, c("OJ","VC"), pch=15,col=c("gold","grey20"),bty="n",lty=1:2)
+
+#dev.off()
+
+
+##############################################################
+## Images in plots
+#Install if necessary:
+#install.packages(c("jpeg","pixmap"))
+library(jpeg)
+library(pixmap)
+
+bradys <- c("marsha","carol","greg","jan","alice",
+            "peter","brady","cindy","mike","bobby")
+
+images <- c()
+for(i in bradys)
+{
+  ##This comes from the jpeg library
+  img <- readJPEG(paste("images/",i,".jpg",sep=""))
+  ##Convert to a pixmap using from the pixmap library:
+  img2<-pixmapRGB(img)
+  images <- c(images,img2)
+}
+
+
+##randomize the order
+ord <- order(runif(length(bradys)))
+
+plot(0,type="n",xlim=c(0,800),ylim=c(0,600),xaxt="n",yaxt="n",
+     xlab="",ylab="",bty="n")
+rect(0,0,800,600,col="black")
+x <- 0
+for(i in images[ord])
+{
+  y <- round(runif(1)*500)
+  addlogo(i,c(x,x+100),c(y,y+60),asp=1) ##addlogo is in pixmaps library
+  x <- x + 70
+}
+
+
+
+################################################################
+### Violin plots
+
+
+v1 <- tapply(OrchardSprays$decrease,
+            list( row=OrchardSprays$rowpos,
+                       treatment=OrchardSprays$treatment), mean)
+
+#Run these or install via RStudio interface if necessary:
+#install.packages("vioplot")
+#install.packages("violinmplot")
+
+library(vioplot)
+library(violinmplot)
+
+#pdf("c5-vioplot1.pdf",width=7,height=4)
+#par(mfrow=c(2,1),mar=c(1,3,4,0))
+vioplot(v1[,1],v1[,2],v1[,3],v1[,4],v1[,5],v1[,6],v1[,7],v1[,8],col="gold",
+        names=LETTERS[1:8],ylim=c(0,200))
+title(main="OrchardSprays violin plot with point overlay: vioplot",
+      ylab="Decrease in bees",xlab="Treatment")
+matplot(t(v1),add=T,pch=1,col="grey30",cex=1)
+#dev.off()
+
+
+#vioplot(v1[,1],v1[,2],v1[,3],v1[,4],v1[,5],v1[,6],v1[,7],v1[,8],col="gold",
+#        names=LETTERS[1:8],h=2,ylim=c(0,200))
+#title(main="OrchardSprays violin plot: vioplot\nsmoothing kernel h=2",
+#      ylab="Decrease in bees",xlab="Treatment")
+
+
+#pdf("c5-vioplot2.pdf",width=7,height=4)
+
+par(mfrow=c(1,1))
+violinmplot(decrease~treatment,data=OrchardSprays,horizontal=F,violin.col="gold",
+            ylim=c(0,200),
+            main="Violin plot of OrchardSprays treatments using violinmplot")
+
+#dev.off()
+
+
+
+
+
+##the violinplot does not work well if you have likert-scale data. This is because
+## it wants to smooth between values, but a likert scale only has integer values 
+## and you may not want to smooth at all.  For a university survey, I was asked to 
+## do some analysis, and developed a custom vioplot suitable for Likert-scale data.
+## To do this, I took the function defined in vioplot and edited it.
+
+vplot2  <- function (x, ..., range = 1.5, h = NULL, ylim = NULL,ylabs=NULL,
+                     names = NULL, 
+                     title="",
+                     horizontal = FALSE, col = "gold", border = "black", lty = 1, 
+                     lwd = 1, rectCol = "black", colMed = "white", pchMed = 19, 
+                     at, add = FALSE, wex = 1, drawRect = TRUE,adjust=0,
+                     crit=3,
+                     ignore=c(0)
+) 
+{
+  datas <- list(x, ...)
+  
+  n <- length(datas)
+  if (missing(at)) 
+    at <- 1:n
+  upper <- vector(mode = "numeric", length = n)
+  lower <- vector(mode = "numeric", length = n)
+  q1 <- vector(mode = "numeric", length = n)
+  q3 <- vector(mode = "numeric", length = n)
+  med <- vector(mode = "numeric", length = n)
+  means <- vector(mode="numeric",length=n)
+  base <- vector(mode = "list", length = n)
+  height <- vector(mode = "list", length = n)
+  Ns <- vector(mode="numeric",length=n)
+  pcts <- vector(mode="numeric",length=n)
+  baserange <- c(Inf, -Inf)
+  args <- list(display = "none")
+  if (!(is.null(h))) 
+    args <- c(args, h = h)
+  
+  data.max <- min(datas[[1]],na.rm=T)
+  data.min <- max(datas[[1]],na.rm=T)
+  
+  for (i in 1:n) {
+    data <- datas[[i]]
+    data.min <- min(data,data.min,na.rm=T)
+    data.max <- max(data,data.max,na.rm=T)
+    q1[i] <- quantile(data, 0.25,na.rm=T)
+    q3[i] <- quantile(data, 0.75,na.rm=T)
+    med[i] <- median(data,na.rm=T)
+    
+    data1 <- data[!is.element(data,ignore) & !is.na(data)]
+    Ns[i] <- sum(!is.na(data))
+    
+    means[i] <- mean(data1)
+    pcts[i] <- round(100*mean((data1+adjust)>crit))
+    #        pcts[i] <- round(100*mean((data1+adjust)> crit))
+    iqd <- q3[i] - q1[i]
+    upper[i] <- min(q3[i] + range * iqd, data.max)
+    lower[i] <- max(q1[i] - range * iqd, data.min)
+    est.xlim <- c(min(lower[i], data.min), max(upper[i], 
+                                               data.max))
+    #        smout <- do.call("sm.density", c(list(data, xlim = est.xlim), 
+    #            args))
+    
+    tab <-  tapply(data,list(factor(data,levels=data.min:data.max)),length)
+    tab[is.na(tab)] <- 0
+    hscale <- .4/max(tab)*wex  ##this scales by the maximum;
+    ##it might be reasonable to scale by the sum.
+    
+    
+    #hscale <- .8/sum(tab)*wex #this scales by the total number,
+    #so the 'volume' is roughly the same across violins.
+    #This produces skinnier curves, because you need to
+    #scale for the lopsided questions
+    
+    
+    ##hscale <- 0.4/max(smout$estimate) * wex
+    
+    ##base[[i]] <- smout$eval.points
+    base[[i]] <- as.numeric(names(tab))
+    
+    ##height[[i]] <- smout$estimate * hscale
+    height[[i]] <- tab * hscale
+    
+    t <- range(base[[i]])
+    baserange[1] <- min(baserange[1], t[1])
+    baserange[2] <- max(baserange[2], t[2])
+    
+  }
+  
+  if (!add) {
+    xlim <- if (n == 1) 
+      at + c(-0.5, 0.5)
+    else range(at) + min(diff(at))/2 * c(-1, 1)
+    if (is.null(ylim)) {
+      ylim <- baserange
+    }
+  }
+  if (is.null(names)) {
+    label <- 1:n
+  }
+  else {
+    label <- names
+  }
+  boxwidth <- 0.05 * wex
+  if (!add) 
+    
+    plot.new()
+  
+  
+  if (!add) {
+    plot.window(xlim = xlim, ylim = ylim)
+    title(title,cex.main=.8,col="darkgrey")
+    
+    if(is.null(ylabs))
+    {
+      axis(2)
+    }else{
+      
+      ylength <- length(ylabs)
+      yvals <- seq(data.max-ylength+1,data.max,1)
+      axis(2,yvals,ylabs,las=1)   
+    } 
+    
+    
+    axis(1, at = at, label = label,tick=F,line=-1,cex.axis=.8)
+    # box(col="grey50")
+    for(i in yvals)abline(i,0,lty=3,col="grey20",lwd=.8)
+    abline( crit-adjust,0,lty=3,col="black",lwd=1)
+  }
+  
+  for (i in 1:n) {
+    polygon(c(at[i] - height[[i]], rev(at[i] + height[[i]])), 
+            c(base[[i]], rev(base[[i]])), col = col, border = border, 
+            lty = lty, lwd = lwd)
+    
+    if (drawRect) {
+      
+      segments(at[i]-.2, means[i],at[i]+.2, means[i], lwd = lwd*1.5,   lty = lty)
+      
+      
+      #rect(at[i] - boxwidth/2, q1[i], at[i] + boxwidth/2,   q3[i], col = rectCol)
+      #points(at[i], med[i], pch = pchMed, col = colMed)
+      
+      ##text means:
+      text(at[i],data.max+.6,paste(expression(mu),"=",(round(means[i],2)+adjust),sep=""),cex=.8,
+           col="grey40")
+      ##text counts
+      text(at[i],data.min-.5,paste("N=",Ns[i],sep="" ),cex=.8,col="grey40")
+      
+      ##text of % positive
+      text(at[i],data.max+.2,paste( pcts[i],"%>",crit,sep=""),cex=.8,col="grey40")
+      
+      
+    }
+  }
+  
+  invisible(list(upper = upper, lower = lower, median = med, 
+                 q1 = q1, q3 = q3,  means=(means+adjust),
+                 pct=pcts))
+  
+}
+
+
+##this just creates a fake dataset:
+
+set.seed(1000)
+levs <-c("Don't Know","Strongly Disagree", "Disagree","Neutral",
+         "Agree",
+         "Strongly Agree")
+gender=as.factor(sample(c("Men","Women"),1000,replace=T))
+vals1 <- pmax(0,floor(rnorm(1000,mean=2.5,sd=.8) - as.numeric(gender)*.5))+1
+vals1[sample(1000,20)]<- 0  ##ad some don't know responses
+
+resps <- factor(levs[vals1+1],levels=levs)
+
+data <- data.frame(gender=gender,
+                   value=vals1,
+                   resps)
+head(data)
+
+#pdf("c5-likertviolin1.pdf",width=9,height=5)
+par(mfrow=c(1,3))
+vioplot(data$value[data$gender=="Men"],
+        data$value[data$gender=="Women"],col="gold")
+
+vioplot(data$value[data$gender=="Men"],
+        data$value[data$gender=="Women"],h=1.2,col="gold")
+
+vioplot(data$value[data$gender=="Men"],
+        data$value[data$gender=="Women"],h=.2,col="gold")
+
+#dev.off()
+
+#pdf("c5-likertviolin2.pdf",width=9,height=5)
+par(mar=c(2,8,3,1),mfrow=c(1,1))
+vplot2(data$value,
+       data$value[data$gender=="Men"],
+       data$value[data$gender=="Women"],
+       at=c(1,3,4),
+       names=c("Overall","Men","Women"),
+       drawRect = T,
+       ylim=c(-1,7),
+       ylabs=levs,
+       ignore=c(0),
+       title="Support for Issue among Constituency"
+       )
+#dev.off()
+
+
+
+
+
+
+
+
+###Exercises:
+plotMeansandSE <- function(x,conds,main="",xlab="",ylab="",
+                                    col="grey20",cex=2)
+{
+  require(gplots)
+  conds <- factor(conds)
+  agg <-     aggregate(x,list(conds),mean)
+  agg$sd <-  aggregate(x,list(conds),sd)$x
+  agg$n <-   aggregate(x,list(conds), length)$x
+  agg$se <- agg$sd/sqrt(agg$n)
+  xvals <- as.numeric(agg$Group.1)
+  xs <- barplot(agg$x,names=agg$Group.1,
+                ylim=c(0,max(agg$x+agg$se*2)), col=col,
+                main=main,xlab=xlab,ylab=ylab)
+  
+  gplots::plotCI(xs,agg$x,agg$se,add=T,lwd=.5,type="n",gap=0,col="black")
+}
+
+set.seed(100)
+conds <- sample(1:4,100,replace=T)
+data <- (rnorm(100,mean=1+conds*5,sd=conds+1))
+
+plotMeansandSE(data,conds,main="Stinky",col="darkgreen",
+               xlab="Condition",ylab="Observed ability")
+
+
+
+set.seed(100)
+conds <- sample(1:4,1000,replace=T)
+data <- (rnorm(1000,mean=10+conds*5,sd=conds+1))
+vioplot(data[conds==1],data[conds==2],data[conds==3],
+        data[conds==4])
+

@@ -1,0 +1,122 @@
+---
+title: "P3"
+author: "Rajasekar Kamaraj, Sivaramakrishnan Sriram"
+date: "9 March 2017"
+output: html_document
+---
+
+**Question 6**
+
+####Libraries
+```{r}
+library(ggplot2)
+library(reshape2)
+#install.packages("rplot.part")
+library(rpart.plot)
+#install.packages("ROCR")
+library(ROCR)
+#install.packages("e1071")
+library(e1071)
+library(class)
+library(rpart)
+library(party)
+```
+
+####Importing the dataset
+```{r}
+newdata <- read.csv("D:/SEM 2/Data mining/Project 3/syp-16-data.csv")
+```
+
+####Melting the data
+```{r}
+groupdata <- melt(newdata)
+```
+
+####Visualization showing the number of respondents who use or do not use each app grouped by age
+```{r}
+ggplot(data=groupdata, aes(x=Adult, fill=factor(value))) + 
+geom_bar() + facet_wrap(~variable, nrow = 5)
+```
+
+####Decision Tree
+```{r}
+output.tree <- ctree(Adult ~ Facebook + Twitter + LinkedIn + Google. + Youtube + Pinterest + Instagram + Tumblr + Flickr + Snapchat + WhatsApp + Vine + Periscope + Viber + KikMessenger + Telegram + ooVoo + YikYak + Other, data = newdata)
+print(output.tree)
+plot(output.tree, type = "simple")
+```
+
+
+**Question 7**
+
+####Importing the dataset
+```{r}
+spam <- read.csv("D:/SEM 2/Data mining/Project 3/spam.csv")
+names(spam)
+```
+
+####Subsetting the data
+```{r}
+newspam <- subset(spam, select=c("day.of.week","time.of.day","size.kb","box",        "local","digits","name", "special","credit","sucker","porn","chain","username",    "large.text","spam"))
+```
+
+####Splitting the data into a training and test set with an 80/20
+```{r}
+set.seed(100)
+dim(newspam)
+indexes <- sample(1:nrow(newspam), size = 0.2*nrow(newspam))
+test = newspam[indexes,]
+dim(test)
+train = newspam[-indexes,]
+dim(train)
+```
+
+####classification tree to predict spam on the training data
+```{r}
+library(rpart)
+fit <- rpart(spam ~ ., data=train)
+print(summary(fit))
+plot(fit)
+text(fit)
+```
+
+####Performance of the decision tree
+```{r}
+fit2 <- rpart(spam ~ ., data=train, method="class", parms=list(split="gini"))
+fit3 <- rpart(spam ~ ., data=test, method="class", parms=list(split="information"))
+
+
+testfit <- predict(fit3, test, type = "class")
+trainfit <- predict(fit2, train, type= "class")
+trainerror <- 1 - sum(trainfit==train[,5]) / nrow(train)
+trainerror
+testerror <- 1 - sum(testfit==test[,5]) / nrow(test)
+testerror
+trainaccuracy <- 1 - trainerror
+trainaccuracy
+testaccuracy <- 1 - testerror
+testaccuracy
+```
+
+####AUC using a threshold of 0.5
+```{r}
+prediction <- rev(seq_along(trainfit))
+prediction[9:10] <- mean(prediction[9:10])
+prediction1 <- rev(seq_along(testfit))
+prediction1[9:10] <- mean(prediction1[9:10])
+library(pROC)
+roc_obj <- roc(trainfit, prediction)
+auc(roc_obj)
+plot(roc_obj, print.auc=TRUE)
+rocobj <- roc(testfit, prediction1)
+auc(rocobj)
+plot(rocobj, print.auc=TRUE)
+```
+
+####Pruning
+```{r}
+pruned.tree <- prune(fit, cp = model.rpart$cptable[which.min(model.rpart$cptable[,"xerror"]),"CP"])
+```
+
+
+
+

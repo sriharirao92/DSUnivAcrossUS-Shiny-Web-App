@@ -1,0 +1,10 @@
+"0","pyramid.plot(India_2017_5year$`Percent Male`,India_2017_5year$`Percent Female`,labels=India_2017_5year$Age,unit=""Percentage"",
+             lxcol=left,rxcol=right,
+             xlim = c(max(India_2017_5year$`Percent Male`),max(India_2017_5year$`Percent Female`)),
+             laxlab=c(0,2,4,6,8,10,14),raxlab=c(0,2,4,6,8,10,14),main = ""Population pyramid for India in Year 2017"",
+             top.labels=c(""Male Population"",""Age"",""Female Population""),gap=1.5,space = 0.3,
+             show.values = TRUE)
+"
+"2","Error in pyramid.plot(India_2017_5year$`Percent Male`, India_2017_5year$`Percent Female`,  : 
+  lx and labels must all be the same length
+"

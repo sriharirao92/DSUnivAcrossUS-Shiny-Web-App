@@ -1,0 +1,65 @@
+library(caret)
+library(plyr)
+set.seed(3456)
+
+#loading the data
+music_data <- read.csv("C:/Users/sriha/Desktop/music.csv")
+prediction_music <- music_data[,-c(2,3,4,5,7,10,12)]
+
+# create 10 Equal folds
+folds <- caret::createFolds(factor(prediction_music$Top10),10,list = FALSE)
+prediction_music$class <- folds
+
+#Ensuring the distribution is balanced
+ddply(prediction_music,~class,summarise,prop = sum(prediction_music$Top10)/length(prediction_music$Top10))
+
+
+err_test_data <- NULL
+knn_roc_perf <- NULL
+acc_test_data <- NULL
+#calculating kNN
+library(class)
+library(ROCR)
+## factorizing the top10 variable
+prediction_music$Top10 <- as.factor(prediction_music$Top10)
+
+## Initializing error for kNN
+knn.test.error <- rep(NA,10)
+for(j in c(1,3,5,7,9))
+{
+  ## kNN using 10-fold Cross-validation for k=1
+  for (i in 1:10) 
+  {
+    train_data <- prediction_music[which(prediction_music$class != i), ]
+    test_data <- prediction_music[which(prediction_music$class == i), ]
+    knn.train.fit <- knn(train_data[,-c(32,33)], train_data[,-c(32,33)], train_data[,32], k=j)
+    knn.test.fit <- knn(train_data[,-c(32,33)], test_data[,-c(32,33)], train_data[,32], k=j)
+    
+    knn.test.error[i] <- 1 - sum(knn.test.fit==test_data[,32]) / nrow(test_data)
+  }
+  #calculating the error
+  err_test_data[j]<- mean(knn.test.error)
+  
+  #calculating the accuracy
+  acc_test_data[j] <- (1 - mean(knn.test.error))
+  
+  #calculating the AUC performance
+  knn_pred <- prediction(as.numeric(knn.test.fit), as.numeric(test_data[,32]))
+  knn_perf <- performance(knn_pred, measure = "auc")
+  knn_roc_perf[j] <- unlist(knn_perf@y.values)
+  
+  
+}
+
+
+
+library(rpart)
+dt.model <- rpart(Top10 ~ ., data=train_data,method = "class")
+dt.model2<- prune(dt.model,cp = c(0.01,0.02))
+dt.test.fit <- predict(dt.model2, test_data, type = "class")
+dt.test.error <- 1 - sum(dt.test.fit==test_data[,32]) / nrow(test_data)
+err_test_dt <- mean(dt.test.error)
+acc_test_dt <- 1- err_test_dt
+
+
+

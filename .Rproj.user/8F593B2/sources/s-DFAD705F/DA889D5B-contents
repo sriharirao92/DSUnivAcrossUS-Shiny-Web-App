@@ -1,0 +1,533 @@
+##  Code for Book: Applied Statistical Analysis in R
+##   A Graduate course for Psychology, Human factors, and Data Science
+##  (c) 2018 Shane T. Mueller, Ph.D.
+##  Michigan Technological University
+##  shanem@mtu.edu
+##
+##  Textbook and videos available at http://pages.mtu.edu/~shanem/psy5210
+##
+##
+## This file contains example software code relevant for Chapter 8.
+
+
+
+par(mfrow=c(2,1))
+hist(rnorm(1000,mean=0,sd=1),col="gold",xlim=c(-3,3),
+     main="Histogram of data")
+
+numexps <- 100000
+means <- rep(0,numexps)
+sds <- rep(0,numexps)
+expsize <- 15
+for(i in 1:numexps)
+{
+  #Generate one experiment:
+  data <- rnorm(expsize,mean=0,sd=1)
+  #estimate its mean
+  means[i] <- mean(data)
+  sds[i] <- sd(data)
+}
+
+hist(means,xlim=c(-3,3),col="grey20",
+     main="Histogram of means")
+
+mean(means)
+sd(means)
+
+
+
+
+
+#pdf("c8-montecarlo.pdf",width=9,height=5)
+par(mfrow=c(1,2))
+x <- hist(means,col="gold",breaks=-20:20/10,main="Histogram of obtained means\n under null hypothesis")
+abline(v=0.5,lwd=3,col="cadetblue3")
+plot(x$mids,cumsum(x$density)/10,type="o",ylab="Cumulative density",xlab="Bin midpoint",pch=16,cex=.5)
+abline(v=0.5,lwd=3,col="cadetblue3")
+#dev.off()
+
+
+## this compares the null distribution versus one where the mean is +.5.
+par(mfrow=c(1,1))
+cadblue <- rgb(122/255,197/255,205/255,.7)
+x <- hist(means,col="gold",breaks=-20:20/10,main="Histogram of obtained means\ null hypothesis")
+hist(means+.5,col=cadblue,add=T)
+
+abline(v=0,lwd=3,col="red")
+abline(v=.5,lwd=3,col="red")
+abline(v=.25,lwd=3,col="red")
+abline(v=.7,lwd=3,col="red")
+
+
+
+###Example t distribution
+
+#pdf("c8-tdist.pdf",width=9,height=5)
+par(mfrow=c(1,1))
+vals <- -500:500/100
+plot(vals,dnorm(vals),type="l",lty=1,lwd=4,col="gold")
+
+points(vals,dt(vals,2),type="l",main="t distribution",
+       ylim=c(0,.5),xlab="Mean")
+points(vals,dt(vals,5),type="l")
+points(vals,dt(vals,15),type="l")
+points(vals,dt(vals,50),type="l")
+abline(v=2)
+#dev.off()
+
+
+1- pt(2.0,2)  ## 2 df/3 observations
+1- pt(2.0,5)  ## 5 df/ 6 observations
+1- pt(2.0,15)  ## 15 df/ 16 observations
+1- pt(2.0,49)  ## 49 df/ 50 observations
+
+
+
+##one-sample t-test by hand
+
+set.seed(1000)
+x0 <- rnorm(30,0)
+x1 <- rnorm(20,.2)
+x1a <- rnorm(200,.2)
+x2 <- rnorm(20,.5)
+x3 <- rnorm(20,mean=.2,sd=.2)
+x4 <- exp(rnorm(100))-1
+
+
+library(vioplot)
+#pdf("c8-vioplots.pdf",width=9,height=6)
+vioplot(x0,x1,x1a,x2,x3,x4,col="gold",
+        names=c("x0","x1","x1a","x2","x3","x4"))
+abline(0,0)
+#dev.off()
+
+
+
+##one-sample t-test by hand:
+
+mu <- mean(x1)
+sd <- sd(x1)
+se <- sd/sqrt(length(x1))
+t <- mu/se
+1-pt(t,19)
+(1- pt(t,19))*2
+
+
+t.test(x0,alternative="greater")
+t.test(x1,alternative="greater")
+t.test(x1,alternative="two.sided")
+
+t.test(x1a,alternative="greater")
+t.test(x2,alternative="greater")
+t.test(x3,alternative="greater")
+
+##############################################################
+###non-parametric one-sample test: sign test/binomial test
+binom.test(sum(x0>0),length(x0),p=.5)
+install.packages("BSDA")
+library(BSDA)
+SIGN.test(x0)
+
+binom.test(sum(x1>0),length(x1),p=.5)
+SIGN.test(x1)
+###########################
+### Bayesian one-sample
+x <- ttestBF(x1)
+
+## Extract samples to get posterior distributions
+samples <- ttestBF(x1,iterations=10000,posterior=TRUE)
+#pdf("c8-posteriors.pdf",width=8,height=5)
+par(mfrow=c(1,2))
+hist(samples[,1],breaks=50,main="Posterior distribution of mu",xlab="Sampled values",col="gold")
+hist(samples[,2],breaks=50,main="Posterior distribution of sigma2",xlab="Sampled Values",col="gold")
+#dev.off()
+
+
+
+
+##additional practice:
+
+## For each of x0, x1, x1a, x2, x3 and x4, 
+## do bayes factor test, t-test and binomial test against 0.
+
+
+##For BSDA::Movie, was the difference positive or negative?
+BSDA::Movie
+
+##Compare toothgrowth data for OJ versus VC, under each dosage.
+ToothGrowth
+
+
+##compare bone density by group for the BSDA::Bones data set
+## Medical advice suggests that bone density should be 210 units. Determine
+## whether the active group is higher than 210. Determine whether the nonactive group 
+## is lower than 210.
+BSDA::Bones
+
+
+##Compare rankings for all dogs in 1992 versus 1998 in BSDA::Dogs
+BSDA::Dogs
+
+
+##x0b <- x0 + runif(length(x0),min=-.1,max=.2)
+
+
+
+
+#####################################################################################
+###End of (Chapter 8-part 1)
+
+
+
+
+
+##t.test
+
+t.test(x0,x0b,paired=T)
+t.test(x0,x0b,paired=T,alternative="less")
+t.test(x0-x0b)  ##one-sample version
+t.test(x0,x0b) ##this is wrong, and not a paired t-test
+
+
+
+##non-parametric paired tests:
+diff <- x0-x0b
+binom.test(sum(diff>0),length(diff))
+wilcox.test(diff,mu=0)
+wilcox.test(x0b,x0,paired=T)
+
+
+
+
+ttestBF(x0,x0b,paired=T)
+ttestBF(x0-x0b)
+ttestBF(x0-x0b,nullInterval=c(0,10))
+
+##Independent samples tests
+
+muX <- mean(x1)
+muY <- mean(x1a)
+
+sdX <- sd(x1)
+sdY <- sd(x1a)
+
+
+se.pooled <- function(x,y)
+{
+  varx <- var(x)
+  vary <- var(y)
+  nx <- length(x)
+  ny <- length(y)
+  sqrt(varx/nx + vary/ny)
+}
+
+t <- (muX-muY)/se.pooled(x1,x1a)
+t
+pt(t,38,lower.tail=T)
+pt(t,23.719,lower.tail=T)
+
+
+t.test(x1,x1a,alternative="less")  
+
+
+wilcox.test(x1,x1a) 
+
+
+
+
+
+
+
+
+
+
+
+##Wilcox test for independent samples
+set.seed(100)
+x <- runif(20)
+y <- runif(20)+.1
+pairs <- outer(x,y,">=")
+pairs  
+sum(pairs)
+length(pairs)
+
+
+plot(pwilcox(0:400,20,20))
+plot(dwilcox(0:400,20,20))
+1-pwilcox(293,20,20)
+
+wilcox.test(x,y)
+wilcox.test(x,y,alternative = "less")
+
+groups <- rep(1:2,each=length(x))
+values <- c(x,y)
+w <- wilcox.test(values~groups)
+
+
+##bayesian independent samples tests:
+
+ttestBF(x1,x1a)
+
+
+
+library(vioplot)
+set.seed(101)
+n <- 40
+pretest <- exp(rnorm(n))
+posttest <- exp(log(pretest) + rnorm(n)+.3)
+difference <- posttest-pretest
+
+vioplot(pretest,posttest,col="gold")
+hist(pretest,breaks=20)
+hist(posttest,breaks=20)
+hist(difference,col="gold")
+abline(v=0)
+t.test(difference)
+binom.test(sum(difference>0),40)
+library(BayesFactor)
+
+
+difference <- posttest-pretest
+hist(difference,col="gold")
+abline(v=0,lwd=2)
+
+ttestBF(difference)
+
+
+
+
+
+pdf("c8wilcox.pdf",width=8,height=4)
+par(mfrow=c(1,2))
+plot(pwilcox(0:400,20,20),type="s",xlab="U/W statistic",ylab="Cumulative Probability",main="Wilcox Rank Sum Distribution")
+plot(dwilcox(0:400,20,20),type="s",xlab="U/W statistic",ylab="Density",main="Wilcox Rank Sum Distribution")
+dev.off()
+
+x<- -500:500/100
+y <- rnorm(1001)*7-x
+var.sample <-function(x,y){sum((x-mean(x))*(y-mean(y)))/(length(x)-1)}
+
+pdf("c9f1.pdf",width=6,height=4)
+plot(x,y,cex=2,col="darkred")
+dev.off()
+
+var.sample(x,y)
+var.sample(x,-y)
+var.sample(-x,x)
+
+cov(x,y)
+
+cov.normalized <-function(x,y){
+  cov <-  sum((x-mean(x))*(y-mean(y)))/(length(x)-1)
+  var1 <- sum((x-mean(x))^2)/(length(x)-1)
+  var2 <- sum((y-mean(y))^2)/(length(y)-1)
+  cov/sqrt(var1)/sqrt(var2)
+}
+
+cov.normalized(x,y)
+cov.normalized(x,y*1000)
+
+
+pdf("c9corsubsample.pdf",width=6,height=6)
+par(mfrow=c(2,2))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+dev.off()
+
+cor.test(x,y)
+
+
+
+cors <- rep(0,10000)
+for(i in 1:10000)
+{  
+  sub<-sample(1:1000,20);
+  cors[i] <- cor.test(x[sub],y[sub])$estimate
+}
+
+pdf("c9hist.pdf", width=5,height=4)
+hist(cors)
+dev.off()
+
+pdf("c8-hair1.pdf",width=8,height=4)
+par(mfrow=c(1,2))
+barplot(HairEyeColor[,,1],main="Male")
+barplot(HairEyeColor[,,2],main="Female")
+dev.off()
+
+pdf("c8-hair2.pdf",width=8,height=4)
+par(mfrow=c(1,2))
+barplot(t(HairEyeColor[,,1]),col=c("brown4","blue","khaki","darkgreen"),main="Male eye color",xlab="Hair color")
+barplot(t(HairEyeColor[,,2]),col=c("brown4","blue","khaki","darkgreen"),main="Female eye color",xlab="Hair color")
+dev.off()
+
+pdf("c8-hair3.pdf",width=6,height=4)
+hc2 <- t(HairEyeColor[,,1]+HairEyeColor[,,2])
+par(mfrow=c(1,1))
+barplot(hc2,col=c("brown4","blue","khaki","darkgreen"))
+dev.off()
+
+
+observed <- hc2[,4]
+
+
+#Compute the expected proportions:
+  
+  brownblond
+brownblond <- hc2[,c(2,4)]
+
+expected.prop <- rowSums(brownblond)/sum(brownblond)
+expected <-  matrix(rep(colSums(brownblond),each=4),nrow=4)*
+  matrix(rep(expected.prop,2),nrow=4)
+
+
+pdf("c8-expected.pdf",width=6,height=4)
+barplot(expected,beside=T,names=c("Brown","Blond"),
+        col=c("brown4","blue","khaki","darkgreen"),
+        ylab="Expected count",main="Expected Distribution")
+
+dev.off()
+
+sumdiff<-sum((brownblond - expected)^2/(expected))
+sumdiff
+
+
+#Pearson's Chi-squared test
+#
+#data:  brownblond
+#X-squared = 85.5966, df = 3, p-value < 2.2e-16
+
+
+
+
+
+chisq.test(hc2[,2],p=hc2[,4],rescale.p=T)
+chisq.test(hc2[,c(2,4)])
+
+
+
+
+
+
+#pdf("c9corsubsample.pdf",width=6,height=6)
+par(mfrow=c(2,2))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+sub<-sample(1:1000,50)
+test <- cor.test(x[sub],y[sub])
+plot(x[sub],y[sub ], main= paste("Correlation =",round(test$estimate,3)))
+#dev.off()
+
+cor.test(x,y)
+
+
+
+cors <- rep(0,10000)
+for(i in 1:10000)
+{  
+  sub<-sample(1:1000,20);
+  cors[i] <- cor.test(x[sub],y[sub])$estimate
+}
+
+pdf("c9hist.pdf", width=5,height=4)
+hist(cors)
+dev.off()
+
+pdf("c8-hair1.pdf",width=8,height=4)
+par(mfrow=c(1,2))
+barplot(HairEyeColor[,,1],main="Male")
+barplot(HairEyeColor[,,2],main="Female")
+dev.off()
+
+pdf("c8-hair2.pdf",width=8,height=4)
+par(mfrow=c(1,2))
+barplot(t(HairEyeColor[,,1]),col=c("brown4","blue","khaki","darkgreen"),main="Male eye color",xlab="Hair color")
+barplot(t(HairEyeColor[,,2]),col=c("brown4","blue","khaki","darkgreen"),main="Female eye color",xlab="Hair color")
+dev.off()
+
+pdf("c8-hair3.pdf",width=6,height=4)
+hc2 <- t(HairEyeColor[,,1]+HairEyeColor[,,2])
+par(mfrow=c(1,1))
+barplot(hc2,col=c("brown4","blue","khaki","darkgreen"))
+dev.off()
+
+
+observed <- hc2[,4]
+
+
+##Compute the expected proportions:
+  
+#brownblond
+brownblond <- hc2[,c(2,4)]
+
+expected.prop <- rowSums(brownblond)/sum(brownblond)
+expected <-  matrix(rep(colSums(brownblond),each=4),nrow=4)*
+matrix(rep(expected.prop,2),nrow=4)
+
+
+#pdf("c8-expected.pdf",width=6,height=4)
+barplot(expected,beside=T,names=c("Brown","Blond"),
+        col=c("brown4","blue","khaki","darkgreen"),
+        ylab="Expected count",main="Expected Distribution")
+
+#dev.off()
+
+sumdiff<-sum((brownblond - expected)^2/(expected))
+sumdiff
+
+
+
+
+
+
+
+###Exercise
+
+
+set.seed(1000)
+x0 <- rnorm(30,0)
+x1 <- rnorm(20,.2)
+x1a <- rnorm(200,.2)
+x2 <- rnorm(20,.5)
+x3 <- rnorm(20,mean=.2,sd=.2)
+x4 <- exp(rnorm(100))-1
+
+
+y1  <- x1 + rnorm(20,mean=.25)
+y1a <- x1a + rnorm(200,mean=.25)
+y2  <- x2 + rnorm(20,mean=0,sd=5)  #no differences
+y3  <- x3 + rnorm(20,mean=.2,sd=3)
+y4  <- x4 + exp(rnorm(100))-1
+
+
+t.test(x1,y1,paired=T)
+t.test(x1a,y1a,paired=T)
+t.test(x2,y2,paired=T)
+t.test(x3,y3,paired=T)
+t.test(x4,y4,paired=T)
+
+
+ttestBF(y1,x1,paired=T)
+ttestBF(x1a,y1a,paired=T)
+ttestBF(x2,y2,paired=T)
+ttestBF(x3,y3,paired=T)
+ttestBF(x4-y4)
+
+

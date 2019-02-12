@@ -1,0 +1,228 @@
+---
+title: "Problem Set 4"
+author: "Srihari Raghavendra Rao"
+date: "09/30/2018"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+#1.  Custom population pyramids
+
+The US census keeps demographic data estimates for every country in the world by year at:
+https://www.census.gov/data-tools/demo/idb/informationGateway.php
+
+In the database, it will let you select a country (or countries), a year, and various outputs including summaries and pyramid plots. If you choose under 'select report' "Population by five year age groups",  or "Population by year age groups" it will give you a table with the population pyramid. For this problem, you will need to create and save three data sets from this website, either comparing  countries, years, or something similar.  When you download a country, be sure to remove the 'total' row so that you don't double-count in your demographics. In this problem, you will download two pyramid data sets from this website and make pyramid plots from them.  Here is a sample of what the first few rows of the data for Angola show:
+
+```
+  2011   0-4 4,619,028 2,306,925 2,312,103 19.7 20.2 19.2 99.8
+  2011   5-9 3,662,105 1,811,221 1,850,884 15.6 15.8 15.3 97.9
+  2011 10-14 2,856,181 1,412,064 1,444,117 12.2 12.3 12.0 97.8
+  2011 15-19 2,370,695 1,158,706 1,211,989 10.1 10.1 10.0 95.6
+  2011 20-24 2,025,188   978,216 1,046,972  8.6  8.6  8.7 93.4
+  2011 25-29 1,710,352   824,681   885,671  7.3  7.2  7.3 93.1
+...
+```
+
+
+Here, the raw counts are in columns 3 and 4. These cannot be used because they have commas in them, and even then pyramid.plot wants percent values (out of 100) by default (giving it numbers in the millions causes trouble as it wants to use percentages on the horizontal axis). So use columns 7 and 8 to plot the pyramids.
+
+A simple (and ugly) pyramid can be made like this:
+```{r}
+library(plotrix)
+#p1 <- read.table("pyr1.txt")
+#pyramid.plot(p1$V7,p1$V8)
+
+```
+
+For this problem:
+
+* Download at least three pyramid data sets whose comparison is interesting. This could either be different countries in the same time, or different times in the same country.  Be sure that the pyramids differ substantially in at least two you select. Describe in words why you chose the three sets, and what you hope to learn by looking at them.
+* Identify a color palette or color scheme from one of the libraries or functions we discussed in class (colorRamp, RColorBrewer, gplots, etc).  Use a common color palette on each pyramid graph.  You may use different colors for men and women.
+* Make the graphic that appears in your solution as professional as possible. There should be no strange axis labels. It should be a readable size, with appropriate titles.
+* Set the following arguments:
+ - lx, rx, rxcol,lxcol,labels,gap, space,show.values,labelcex,xlim, and main, and laxlabel/raxlabel if needed
+ - Note that xlim takes two positive values, like c(25,25) .
+
+Make separate  pyramid plots for each of the three related data sets. Discuss what differs between the data sets, and what it means about either the history or future of the countries or time eras within a country.
+
+Warning: pyramid.plot can be fussy about its settings.  There are reasonable settings for margins,labels, and data values that will cause it to fail or hang.  To deal with this, be sure to make only one change at a time when you are making your figure, so you can easily identify if something went wrong.
+
+```{r fig.width=10,fig.height=10}
+
+# Load required libraries
+library(plotrix)
+library(RColorBrewer)
+
+# Load the dataset obtained from census.gov website.
+Indo_2017_5year <- read.csv("C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/indo_2017_5year.csv")
+India_2017_5year <- read.csv("C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/India_2017_5year.csv")
+US_2017_5year <- read.csv("C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/US_2017_5year.csv")
+
+```
+
+Here I have opted for dataset about "Population by 5 year age groups" for three countries "India", "Indonesia" and "United States" and for year 2017. I have specifically opted for these countries as India and United states are large countries whereas indonesia is a small one. Also "India and Indonesia" are developing countries whereas "United States" is a developed country.
+
+Below we are gonna plot three pyramid plots for each country and see how the Male and Female population distribution varies among the countries and within each country by age groups.
+
+Implementing the function pyramid plot:
+
+pyramid.plot(args)
+
+Arguments passed to the method:
+
+lx,rx
+Vectors or a matrix or data frame (see Details) which should be of equal length.
+
+labels
+Labels for the categories represented by each pair of bars. There should be a label for each lx or rx value, even if empty. If labels is a matrix or data frame, the first two columns will be used for the left and right category labels respectively.
+
+top.labels
+The two categories represented on the left and right sides of the plot and a heading for the labels in the center.
+
+main
+Optional title for the plot.
+
+laxlab
+Optional labels for the left x axis ticks.
+
+raxlab
+Optional labels for the right x axis ticks.
+
+unit
+The label for the units of the plot.
+
+lxcol,rxcol
+Color(s) for the left and right sets of bars. Both of these default to rainbow(length(labels)).
+
+gap
+One half of the space between the two sets of bars for the labels in user units.
+
+space
+Space between the bars. Should be 0 <= space < 1.
+
+labelcex
+Expansion for the category labels.
+
+xlim
+Optional x limit for the plot (see Details).
+
+show.values
+Whether to display lx and rx at the ends of the bars.
+
+```{r fig.width=10,fig.height=7}
+
+right <- c()  # Define a empty vector to hold the color values for each age group and for Females.
+left <- c()   # Define a empty vector to hold the color values for each age group and for Males.
+
+# loop through each row of the dataframe to allocate color based on which value is higher or lower (between male and female percentage)
+
+# We allocate the color "Blue" if the value is lower than the other value or "Red" if it is higher and "Orange" if it is equal
+for(i in 1:dim(India_2017_5year)[1]){
+  if(India_2017_5year[i,9]<India_2017_5year[i,8]){
+    right <- c(right,"blue")
+    left <- c(left,"red")}
+  else if(India_2017_5year[i,9]>India_2017_5year[i,8]){
+    right <- c(right,"red")
+    left <- c(left,"blue")
+  }else{
+    right <- c(right,"Orange")
+    left <- c(left,"Orange")
+  }
+}
+
+# plot the pyramid plot using the dataset for country India
+pyramid.plot(India_2017_5year$`Percent Male`,India_2017_5year$`Percent Female`,labels=India_2017_5year$Age,unit="Percentage",
+             lxcol=left,rxcol=right,
+             xlim = c(max(India_2017_5year$`Percent Male`),max(India_2017_5year$`Percent Female`)),
+             laxlab=c(0,2,4,6,8,10,14),raxlab=c(0,2,4,6,8,10,14),main = "Population pyramid for India in Year 2017",
+             top.labels=c("Male Population","Age","Female Population"),gap=1.5,space = 0.3,
+             show.values = TRUE,labelcex = 1.5)
+
+# Add a box around the pyramid plot for more aesthetic appeal
+box()
+
+# add legends for the same
+legend("topleft", legend=c("Higher", "Lower","Equal"),
+       fill=c("red", "blue","orange"), , cex=0.8)
+```
+
+```{r fig.width=10,fig.height=7}
+
+right <- c() # Define a empty vector to hold the color values for each age group and for Females.
+left <- c() # Define a empty vector to hold the color values for each age group and for Males.
+
+# loop through each row of the dataframe to allocate color based on which value is higher or lower (between male and female percentage)
+
+# We allocate the color "Blue" if the value is lower than the other value or "Red" if it is higher and "Orange" if it is equal
+for(i in 1:dim(Indo_2017_5year)[1]){
+  if(Indo_2017_5year[i,9]<Indo_2017_5year[i,8]){
+    right <- c(right,"blue")
+    left <- c(left,"red")}
+  else if(Indo_2017_5year[i,9]>Indo_2017_5year[i,8]){
+    right <- c(right,"red")
+    left <- c(left,"blue")
+  }else{
+    right <- c(right,"Orange")
+    left <- c(left,"Orange")
+  }
+}
+
+# plot the pyramid plot using the dataset for country Indonesia
+ pyramid.plot(Indo_2017_5year$`Percent Male`,Indo_2017_5year$`Percent Female`,labels=Indo_2017_5year$Age,unit="Percentage",
+             lxcol=left,rxcol=right,
+             xlim = c(max(Indo_2017_5year$`Percent Male`),max(Indo_2017_5year$`Percent Female`)),
+             laxlab=c(0,2,4,6,8,10,14),raxlab=c(0,2,4,6,8,10,14),main = "Population pyramid for India in Year 2017",
+             top.labels=c("Male Population","Age","Female Population"),gap=1.5,space = 0.3,
+             show.values = TRUE,labelcex = 1.5)
+
+# Add a box around the pyramid plot for more aesthetic appeal
+box()
+
+# add legends
+legend("topleft", legend=c("Higher", "Lower","Equal"),
+       fill=c("red", "blue","orange"), , cex=0.8)
+```
+
+
+
+```{r fig.width=10,fig.height=7}
+
+right <- c() # Define a empty vector to hold the color values for each age group and for Females.
+left <- c()  # Define a empty vector to hold the color values for each age group and for Males.
+
+# loop through each row of the dataframe to allocate color based on which value is higher or lower (between male and female percentage)
+
+# We allocate the color "Blue" if the value is lower than the other value or "Red" if it is higher and "Orange" if it is equal
+for(i in 1:dim(US_2017_5year)[1]){
+  if(US_2017_5year[i,9]<US_2017_5year[i,8]){
+    right <- c(right,"blue")
+    left <- c(left,"red")}
+  else if(US_2017_5year[i,9]>US_2017_5year[i,8]){
+    right <- c(right,"red")
+    left <- c(left,"blue")
+  }else{
+    right <- c(right,"Orange")
+    left <- c(left,"Orange")
+  }
+}
+
+
+# plot the pyramid plot using the dataset for country USA
+pyramid.plot(US_2017_5year$`Percent Male`,US_2017_5year$`Percent Female`,labels=US_2017_5year$Age,unit="Percentage",
+             lxcol=left,rxcol=right,
+             xlim = c(max(US_2017_5year$`Percent Male`),max(US_2017_5year$`Percent Female`)),
+             laxlab=c(0,2,4,6,8,10,14),raxlab=c(0,2,4,6,8,10,14),main = "Population pyramid for India in Year 2017",
+             top.labels=c("Male Population","Age","Female Population"),gap=1.5,space = 0.3,
+             show.values = TRUE,labelcex = 1.5)
+
+# Add a box around the pyramid plot for more aesthetic appeal
+box()
+
+# add legends
+legend("topleft", legend=c("Higher", "Lower","Equal"),
+       fill=c("red", "blue","orange"), , cex=0.8)
+```
+

@@ -1,0 +1,6 @@
+"0","setwd(""C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4"")"
+"0","library(plotrix)"
+"0","library(RColorBrewer)"
+"0","India_2017_5year <- read.csv(""C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/India_2017_5year.csv"")"
+"0","Indo_2017_5year <- read.csv(""C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/indo_2017_5year.csv"")"
+"0","US_2017_5year <- read.csv(""C:/Users/sriha/Desktop/3rd Sem/Adv Stats/Prob Set 4/US_2017_5year.csv"")"

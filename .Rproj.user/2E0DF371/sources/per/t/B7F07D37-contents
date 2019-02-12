@@ -1,0 +1,260 @@
+---
+title: "P3_Group_7"
+author: "Sivaramakrishnan Sriram,Rajasekar Kamaraj"
+date: "8 March 2017"
+output: html_document
+---
+**1**
+```{r}
+eva <- function(x,threshold)
+{
+  tn <- 0
+  tp <- 0
+  fp <- 0
+  fn <- 0
+  temp <- x[,2]
+  comp <- x[,1]
+  for(i in 1:nrow(x))
+  {
+    if(temp[i] >= threshold)
+    {
+      if(comp[i] == 1)
+        tp <- tp +1
+      if(comp[i] == 0)
+        fp <- fp+1
+    }
+    if(temp[i] < threshold)
+    {
+      if(comp[i] == 0)
+        tn <- tn +1
+      if(comp[i] == 1)
+        fn <- fn+1
+    }
+  }
+  accuracy <- (tp+tn)/(tp+tn+fp+fn)
+  errorrate <- 1 - accuracy
+  precision <- tp/(tp+fp)
+  recall <- tp/(tp+fn)
+  sensitivity <- tp/(tp+fn)
+  specificity <- tn/(tn+fp)
+  tpr <- tp/(tp+fn)
+  tnr <- tn/(fp+tn)
+  confusing_matrix <- as.data.frame(cbind(tp,tn,fp,fn,accuracy,errorrate,precision,recall,sensitivity,specificity,tpr,tnr))
+  names(confusing_matrix) <- c("tp","tn","fp","fn","accuracy","errorrate","precision","recall","sensitivity","specificity","tpr","tnr")
+  return(confusing_matrix)
+  }
+```
+
+**2**
+```{r}
+given_data <- data.frame(c(1,0,1,1,0,0,1,0,1,0),c(0.98,0.92,0.85,0.77,0.71,0.64,0.50,0.39,0.34,0.31))
+thresh_data <- c(0.98,0.92,0.85,0.77,0.71,0.64,0.50,0.39,0.34,0.31)
+result_2 <- data.frame(0,0,0,0,0,0,0,0,0,0,0,0)
+for(i in 1:10)
+{
+result_2[i,] <- eva(given_data,thresh_data[i])
+}
+names(result_2) <- c("tp","tn","fp","fn","accuracy","errorrate","precision","recall","sensitivity","specificity","tpr","tnr")
+result_2$fpr <- 1 - result_2$specificity
+print("true positive rate")
+print(result_2$tpr)
+print("false positive rate")
+print(result_2$fpr)
+print("accuracy")
+print(result_2$accuracy)
+```
+
+**3**
+```{r}
+library(ggplot2)
+ggplot(result_2, aes(fpr,sensitivity,color = "red"))+geom_line(size = 2, alpha = 0.7)+
+      labs(title= "ROC curve", 
+           x = "1-Specificity", 
+           y = "Sensitivity")
+```
+**4**
+```{r}
+#Given Error rates
+M1_error_rate <- c(30.5, 32.2, 20.7, 20.6, 31.0, 41.0, 27.7, 26.0, 21.5, 26.0)
+M2_error_rate <- c(22.4,14.5, 22.4, 19.6, 20.7, 20.4, 22.1, 19.4, 16.2, 35.0)
+#calculating Mean Error Rates
+mean_error_rate_M1 <- mean(M1_error_rate)
+mean_error_rate_M2 <- mean(M2_error_rate)
+#calculating the mean difference
+mean_diff <- mean_error_rate_M1 -mean_error_rate_M2
+#variance
+variance <- function(m1,m2,mean_m1,mean_m2)
+{
+  k <- 10
+  sum <- 0
+  for(i in 1:k)
+  {
+    vari <- (M1_error_rate[i] - M2_error_rate[i] - (mean_diff))
+    vari <- vari * vari
+    sum <- sum + vari
+  }
+  return(sum/k)
+}
+var_diff <- variance(M1_error_rate,M2_error_rate,mean_error_rate_M1,mean_error_rate_M2)
+#calculating t value
+t <- (mean_diff)/sqrt(var_diff/10)
+print("t value")
+print(t)
+
+#calculating the T-distribution value
+t_value <- qt(1-0.005,9)
+print("t-distribution value")
+print(t_value)
+```
+Conclusion: As the calculated "t-value" , is less the t-distribution critical value we cannot reject null hypothesis and we conclude that any difference between M1 and M2 can be attributed to chance.
+
+**5**
+```{r}
+#Given Data
+N <- c(100,50,60)
+N11 <- c(62,8,0)
+N12 <- c(38,42,60)
+N21 <- c(65,20,0)
+N22 <- c(21,19,20)
+N23 <- c(14,11,40)
+```
+
+**5(a)**
+```{r}
+#creating a function for calculating gini
+gini <- function(classes)
+{
+  count <- sum(classes)
+  p1 <- classes[1]/count
+  p2 <- classes[2]/count
+  p3 <- classes[3]/count
+  gini_val <- 1 - (p1*p1) - (p2*p2) - (p3*p3)
+  return(gini_val)
+}
+#calculating gini values
+gini_N <- gini(N)
+gini_N11 <- gini(N11)
+gini_N12 <- gini(N12)
+gini_N21 <- gini(N21)
+gini_N22 <- gini(N22)
+gini_N23 <- gini(N23)
+#calculating gain in gini
+first_split_gain <- gini_N - (((sum(N11)*gini_N11)+(sum(N12)*gini_N12))/(sum(N11)+sum(N12)))
+second_split_gain <- gini_N - (((sum(N21)*gini_N21)+(sum(N22)*gini_N22) + (sum(N23)*gini_N23))/(sum(N21)+sum(N22)+sum(N23)))
+print("first_split_gain")
+print(first_split_gain)
+print("second_split_gain")
+print(second_split_gain)
+```
+
+**5(b)**
+As the gini gain of first split is greater than second split the next node
+**5(c)**
+```{r}
+#creating a function for calculating entropy
+entropy_fun <- function(classes)
+{
+  count <- sum(classes)
+  p1 <- (classes[1]+1)/count
+  p2 <- (classes[2]+1)/count
+  p3 <- (classes[3]+1)/count
+  entropy_val <-  -(p1 * log2(p1)) - (p2 * log2(p2)) - (p3 * log2(p3)) 
+  return(entropy_val)
+}
+#calculating gini values
+entropy_N <- entropy_fun(N)
+entropy_N11 <- entropy_fun(N11)
+entropy_N12 <- entropy_fun(N12)
+entropy_N21 <- entropy_fun(N21)
+entropy_N22 <- entropy_fun(N22)
+entropy_N23 <- entropy_fun(N23)
+#calculating gain in gini
+first_split_igain <- entropy_N - (((sum(N11)*entropy_N11)+(sum(N12)*entropy_N12))/(sum(N11)+sum(N12)))
+second_split_igain <- entropy_N - (((sum(N21)*entropy_N21)+(sum(N22)*entropy_N22) + (sum(N23)*entropy_N23))/(sum(N21)+sum(N22)+sum(N23)))
+print("first_split_information_gain")
+print(first_split_igain)
+print("second_split_information_gain")
+print(second_split_igain)
+```
+
+**8(A&B)**
+```{r}
+library(caret)
+library(plyr)
+set.seed(3456)
+#loading the data
+music_data <- read.csv("C:/Users/siva krish/Desktop/MTU 1st Sem/Data Mining/P3/music.csv")
+prediction_music <- music_data[,-c(2,3,4,5,7,10,12)]
+# create 10 Equal folds
+folds <- createFolds(factor(prediction_music$Top10),10,list = FALSE)
+prediction_music$class <- folds
+
+#Ensuring the distribution is balanced
+ddply(prediction_music,~class,summarise,prop = sum(prediction_music$Top10)/length(prediction_music$Top10))
+```
+
+**8(c)**
+```{r}
+err_test_data <- NULL
+knn_roc_perf <- NULL
+#calculating kNN
+library(class)
+library(ROCR)
+## factorizing the top10 variable
+prediction_music$Top10 <- as.factor(prediction_music$Top10)
+
+## Initializing error for kNN
+knn.test.error <- rep(NA,10)
+for(j in c(1,3,5,7,9))
+{
+## kNN using 10-fold Cross-validation for k=1
+ for (i in 1:10) 
+  {
+  train_data <- prediction_music[which(prediction_music$class != i), ]
+  test_data <- prediction_music[which(prediction_music$class == i), ]
+knn.train.fit <- knn(train_data[,-c(32,33)], train_data[,-c(32,33)], train_data[,32], k=j)
+knn.test.fit <- knn(train_data[,-c(32,33)], test_data[,-c(32,33)], train_data[,32], k=j)
+  
+knn.test.error[i] <- 1 - sum(knn.test.fit==test_data[,32]) / nrow(test_data)
+}
+#calculating the error
+err_test_data[j]<- mean(knn.test.error)
+
+#calculating the accuracy
+acc_test_data[j] <- 1 - mean(knn.test.error)
+
+#calculating the AUC performance
+knn_pred <- prediction(as.numeric(knn.test.fit), as.numeric(test_data[,32]))
+knn_perf <- performance(knn_pred, measure = "auc")
+knn_roc_perf[j] <- unlist(knn_perf@y.values)
+}
+```
+**8(D)**
+```{r}
+#calculating Decision Tree
+library(rpart)
+dt.model <- rpart(Top10 ~ ., data=train_data,method = "class")
+dt.model2<- prune(dt.model,cp = c(0.01,0.02))
+dt.test.fit <- predict(dt.model2, test_data, type = "class")
+dt.test.error <- 1 - sum(dt.test.fit==test_data[,32]) / nrow(test_data)
+err_test_dt <- mean(dt.test.error)
+acc_test_dt <- 1- err_test_dt
+```
+
+
+**8(E)**
+
+```{r}
+library(e1071)
+library(ROCR)
+#calculating naive bayes
+nb.model <- naiveBayes(as.factor(train_data[,ncol(train_data)]) ~ ., data = train_data)
+nb.test.fit = predict(nb.model, test_data[,-33])
+nb.test.error <- 1 - sum(nb.test.fit==test_data[,33]) / nrow(test_data)
+nb.pred <- prediction(as.numeric(nb.test.fit), as.numeric(test_data[,32]))
+nb.roc.perf <- performance(nb.pred, "tpr", "fpr")
+
+```
+
+References:
+http://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation 

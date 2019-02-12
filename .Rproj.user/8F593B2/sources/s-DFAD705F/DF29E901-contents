@@ -1,0 +1,84 @@
+---
+title: "Exam Adv Stats"
+output: html_document
+---
+
+Problem 1
+Use aggregate, tapply, or similar to determine the mean and sds for the following, and answer these questions.
+For each, show tables, and write text that both asks and answers the following questions. When you observe
+a difference, explain why you might have seen this and what it might mean.
+
+#************
+Finding mean and sd for all the numeric columns in data frame
+
+```{r}
+newDf <- dplyr::select_if(pooled,is.numeric)
+colMeans(newDf)
+```
+
+```{r}
+apply(newDf,2,sd)
+```
+
+#****************
+(a) What was the effect of time of day on RT and accuracy?
+
+aggregating rt by tod with avg gives the below plot and shows that late morning ppl have higher response time and least during afternoon
+```{r}
+plot(aggregate(pooled$rt,by=list(pooled$tod),mean))
+```
+but doing a sum of the response times for each tod we see that evening has the least response time which is good and late morning still has highest response times.
+
+```{r}
+plot(aggregate(pooled$rt,by=list(pooled$tod),sum))
+lines(aggregate(pooled$rt,by=list(pooled$tod),sum))
+```
+
+for accuracy we see that the column corr is coded as 1 for correct values and 0 for incorrect values. to convert that to accuracy values we need to calculate accuracy by dividing correct values with total values for each tod.
+
+```{r}
+accuTable <- table(pooled$corr,pooled$tod)
+percentAccuTOD <- (accuTable[2,]/(apply(accuTable,2,sum)))*100
+plot(percentAccuTOD)
+```
+
+#*******************
+(b) What was the effect of session on RT and accuracy?
+
+average rt values vs session
+```{r}
+plot(aggregate(pooled$rt,by=list(pooled$session),mean))
+```
+
+sum of rt values vs sessions
+```{r}
+plot(aggregate(pooled$rt,by=list(pooled$session),sum))
+```
+
+accuracy vs session 
+```{r}
+accuTable1 <- table(pooled$corr,pooled$session)
+percentAccuSession1 <- (accuTable1[2,]/(apply(accuTable1,2,sum)))*100
+plot(percentAccuSession1)
+```
+
+```{r}
+PlotCombo <- function(x,y,data) {
+  if(!(is.na(x) & is.na(y))){
+    print(dim(data))
+    newDf <- filter(data,subnum %in% x,session %in% y)
+    print(dim(newDf))
+    if(dim(newDf)[1]==0){
+      plot(0,type = 'n',axes=FALSE,ann=FALSE)
+      text(1,0,"No data available")
+      warning("No data for given input arguments")
+    }else{
+      meanRT <- aggregate(newDf$rt,by=list(newDf$trial),mean)
+      plot(meanRT)
+    }
+  }else{
+    warning("Input arguments contain NULL values")
+  }
+}
+```
+

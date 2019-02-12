@@ -1,0 +1,342 @@
+---
+**Question 1**
+```{r}
+f1 <- function(Y_pred,Y_true){
+  tp=0
+  fp=0
+  tn=0
+  fn=0
+  for(i in 1:10){
+    if(Y_pred[i] ==0 && Y_true[i]==0)
+      tp=tp+1
+    if(Y_pred[i] ==0 && Y_true[i]==1)
+      fp=fp+1
+    if(Y_pred[i] ==1 && Y_true[i]==0)
+      fn=fn+1
+    if(Y_pred[i] ==1 && Y_true[i]==1)
+      tn=tn+1
+  }
+  TPR = tp/(tp + fn)
+  TNR = tn/(tn + fp)
+  precision = tp/(tp+fp)
+  recall = tp/(tp+fn)
+  accuracy = (tp+tn)/(tp+tn+fp+fn)
+  error_rate = 1 - accuracy
+  specificity =TNR
+  sensitivity = TPR
+  return(c(tp,tn,fp,fn,TPR,TNR,precision,recall,accuracy,error_rate,specificity,sensitivity))
+}
+```
+
+**Question 2**
+```{r}
+result <- data.frame(0,0,0,0,0,0,0,0,0,0,0,0)
+new_pred=0
+Y_true <- c(1,0,1,1,0,0,1,0,1,0)
+Y_pred<- c(0.98,0.92,0.85,0.77,0.71,0.64,0.50,0.39,0.34,0.3)
+for(i in 1:10)
+{
+  thres<-Y_pred[i]
+  for(j in 1:10){
+    if(Y_pred[j]  >= thres){
+     new_pred[j]=1  
+    }
+    if(Y_pred[j] < thres){
+      new_pred[j]=0
+    }
+    
+  }
+result[i,] <- f1(new_pred,Y_true)
+}
+colnames(result) <- c("tp","tn","fp","fn","TPR","TNR","precision","recall","accuracy","error_rate","specificity","sensitivity")
+print(result)
+```
+
+**Question 3***
+```{r}
+plot(1 - result$specificity, result$sensitivity, type = "l", col = "red", 
+     ylab = "Sensitivity", xlab = "1 - Specificity")
+abline(c(0,0),c(1,1))
+```
+
+**Question 4**
+```{r}
+M1<-c(30.5, 32.2, 20.7, 20.6, 31.0, 41.0, 27.7, 26.0, 21.5, 26.0)
+M2<-c(22.4,14.5, 22.4, 19.6, 20.7, 20.4, 22.1, 19.4, 16.2, 35.0)
+m1 <- mean(M1)
+m2 <- mean(M2)
+a <- 0
+testfunction<-function(M1,M2){
+for(i in 1:10)
+{
+a <- a + (M1[i]- M2[i] - (m1-m2))^2
+}
+  a <- a/10
+  ttest<-(m1-m2)/(sqrt(a/10))
+  return(ttest)
+}
+print("t test value")
+testfunction(M1,M2)
+t<-qt(1-0.01,9) #alpha=1%
+t
+##This shows there exists significance difference between 2 groups##
+```
+
+**Question 5**
+```{r}
+#Given Data
+N <- c(100,50,60)
+N11 <- c(62,8,0)
+N12 <- c(38,42,60)
+N21 <- c(65,20,0)
+N22 <- c(21,19,20)
+N23 <- c(14,11,40)
+```
+```{r}
+#creating a function for calculating gini
+gini <- function(call)
+{
+  count <- sum(call)
+  p1 <- call[1]/count
+  p2 <- call[2]/count
+  p3 <- call[3]/count
+  gini_val <- 1 - (p1*p1) - (p2*p2) - (p3*p3)
+  return(gini_val)
+}
+gini_N <- gini(N)
+gini_N11 <- gini(N11)
+gini_N12 <- gini(N12)
+gini_N21 <- gini(N21)
+gini_N22 <- gini(N22)
+gini_N23 <- gini(N23)
+
+firstsplitgain <- gini_N - (((sum(N11)*gini_N11)+(sum(N12)*gini_N12))/(sum(N11)+sum(N12)))
+
+secondsplitgain <- gini_N - (((sum(N21)*gini_N21)+(sum(N22)*gini_N22) + (sum(N23)*gini_N23))/(sum(N21)+sum(N22)+sum(N23)))
+
+print("1st split gain is :")
+print(firstsplitgain)
+print("2nd split gain is :")
+print(secondsplitgain)
+```
+
+##5(b)##
+#As the gini gain of first split is greater than second split the next node##
+```{r}
+#creating a function for calculating entropy
+entropy_function <- function(call)
+{
+  count <- sum(call)
+  p1 <- (call[1]+1)/count
+  p2 <- (call[2]+1)/count
+  p3 <- (call[3]+1)/count
+  entropy_val <-  -(p1 * log2(p1)) - (p2 * log2(p2)) - (p3 * log2(p3)) 
+  return(entropy_val)
+}
+
+entropy_N <- entropy_function(N)
+entropy_N11 <- entropy_function(N11)
+entropy_N12 <- entropy_function(N12)
+entropy_N21 <- entropy_function(N21)
+entropy_N22 <- entropy_function(N22)
+entropy_N23 <- entropy_function(N23)
+
+firstsplit_infogain <- entropy_N - (((sum(N11)*entropy_N11)+(sum(N12)*entropy_N12))/(sum(N11)+sum(N12)))
+
+secondsplit_infogain <- entropy_N - (((sum(N21)*entropy_N21)+(sum(N22)*entropy_N22) + (sum(N23)*entropy_N23))/(sum(N21)+sum(N22)+sum(N23)))
+
+print(firstsplit_infogain)
+print(secondsplit_infogain)
+```
+**Question 6**
+
+####Libraries
+```{r}
+library(ggplot2)
+library(reshape2)
+#install.packages("rplot.part")
+library(rpart.plot)
+#install.packages("ROCR")
+library(ROCR)
+#install.packages("e1071")
+library(e1071)
+library(class)
+library(rpart)
+library(party)
+```
+
+####Importing the dataset
+```{r}
+newdata <- read.csv("C:/Users/sriha/Desktop/syp-16-data.csv")
+```
+
+####Melting the data
+```{r}
+groupdata <- melt(newdata)
+```
+
+####Visualization showing the number of respondents who use or do not use each app grouped by age
+```{r}
+ggplot(data=groupdata, aes(x=Adult, fill=factor(value))) + 
+geom_bar() + facet_wrap(~variable, nrow = 5)
+```
+
+####Decision Tree
+```{r}
+output.tree <- ctree(Adult ~ Facebook + Twitter + LinkedIn + Google. + Youtube + Pinterest + Instagram + Tumblr + Flickr + Snapchat + WhatsApp + Vine + Periscope + Viber + KikMessenger + Telegram + ooVoo + YikYak + Other, data = newdata)
+print(output.tree)
+plot(output.tree, type = "simple")
+```
+
+
+**Question 7**
+
+####Importing the dataset
+```{r}
+spam <- read.csv("C:/Users/sriha/Desktop/spam.csv")
+names(spam)
+```
+
+####Subsetting the data
+```{r}
+newspam <- subset(spam, select=c("day.of.week","time.of.day","size.kb","box",        "local","digits","name", "special","credit","sucker","porn","chain","username",    "large.text","spam"))
+```
+
+####Splitting the data into a training and test set with an 80/20
+```{r}
+set.seed(100)
+dim(newspam)
+indexes <- sample(1:nrow(newspam), size = 0.2*nrow(newspam))
+test = newspam[indexes,]
+dim(test)
+train = newspam[-indexes,]
+dim(train)
+```
+
+####classification tree to predict spam on the training data
+```{r}
+library(rpart)
+fit <- rpart(spam ~ ., data=train)
+print(summary(fit))
+plot(fit)
+text(fit)
+```
+
+####Performance of the decision tree
+```{r}
+fit2 <- rpart(spam ~ ., data=train, method="class", parms=list(split="gini"))
+fit3 <- rpart(spam ~ ., data=test, method="class", parms=list(split="information"))
+
+
+testfit <- predict(fit3, test, type = "class")
+trainfit <- predict(fit2, train, type= "class")
+trainerror <- 1 - sum(trainfit==train[,5]) / nrow(train)
+trainerror
+testerror <- 1 - sum(testfit==test[,5]) / nrow(test)
+testerror
+trainaccuracy <- 1 - trainerror
+trainaccuracy
+testaccuracy <- 1 - testerror
+testaccuracy
+```
+
+####AUC using a threshold of 0.5
+```{r}
+prediction <- rev(seq_along(trainfit))
+prediction[9:10] <- mean(prediction[9:10])
+prediction1 <- rev(seq_along(testfit))
+prediction1[9:10] <- mean(prediction1[9:10])
+library(pROC)
+roc_obj <- roc(trainfit, prediction)
+auc(roc_obj)
+plot(roc_obj, print.auc=TRUE)
+rocobj <- roc(testfit, prediction1)
+auc(rocobj)
+plot(rocobj, print.auc=TRUE)
+```
+
+####Pruning
+```{r}
+pruned.tree <- prune(fit, cp = fit$cptable[which.min(fit$cptable[,"xerror"]),"CP"])
+```
+**Question8**
+```{r}
+library(caret)
+library(plyr)
+set.seed(3456)
+
+#loading the data
+music_data <- read.csv("C:/Users/sriha/Desktop/music.csv")
+prediction_music <- music_data[,-c(2,3,4,5,7,10,12)]
+
+# create 10 Equal folds
+folds <- caret::createFolds(factor(prediction_music$Top10),10,list = FALSE)
+prediction_music$class <- folds
+
+#Ensuring the distribution is balanced
+ddply(prediction_music,~class,summarise,prop = sum(prediction_music$Top10)/length(prediction_music$Top10))
+```
+```{r}
+err_test_data <- NULL
+knn_roc_perf <- NULL
+acc_test_data <- NULL
+#calculating kNN
+library(class)
+library(ROCR)
+## factorizing the top10 variable
+prediction_music$Top10 <- as.factor(prediction_music$Top10)
+
+## Initializing error for kNN
+knn.test.error <- rep(NA,10)
+for(j in c(1,3,5,7,9))
+{
+  ## kNN using 10-fold Cross-validation for k=1
+  for (i in 1:10) 
+  {
+    train_data <- prediction_music[which(prediction_music$class != i), ]
+    test_data <- prediction_music[which(prediction_music$class == i), ]
+    knn.train.fit <- knn(train_data[,-c(32,33)], train_data[,-c(32,33)], train_data[,32], k=j)
+    knn.test.fit <- knn(train_data[,-c(32,33)], test_data[,-c(32,33)], train_data[,32], k=j)
+    
+    knn.test.error[i] <- 1 - sum(knn.test.fit==test_data[,32]) / nrow(test_data)
+  }
+  #calculating the error
+  err_test_data[j]<- mean(knn.test.error)
+  
+  #calculating the accuracy
+  acc_test_data[j] <- (1 - mean(knn.test.error))
+  
+  #calculating the AUC performance
+  knn_pred <- prediction(as.numeric(knn.test.fit), as.numeric(test_data[,32]))
+  knn_perf <- performance(knn_pred, measure = "auc")
+  knn_roc_perf[j] <- unlist(knn_perf@y.values)
+  
+  
+}
+```
+```{r}
+#decision tree
+library(rpart)
+dt.model <- rpart(Top10 ~ ., data=train_data,method = "class")
+dt.model2<- prune(dt.model,cp = c(0.01,0.02))
+dt.test.fit <- predict(dt.model2, test_data, type = "class")
+dt.test.error <- 1 - sum(dt.test.fit==test_data[,32]) / nrow(test_data)
+err_test_dt <- mean(dt.test.error)
+acc_test_dt <- 1- err_test_dt
+```
+```{r}
+library(e1071)
+library(ROCR)
+#calculating naive bayes
+nb.model <- naiveBayes(as.factor(train_data[,ncol(train_data)]) ~ ., data = train_data)
+nb.test.fit = predict(nb.model, test_data[,-33])
+nb.test.error <- 1 - sum(nb.test.fit==test_data[,33]) / nrow(test_data)
+nb.pred <- prediction(as.numeric(nb.test.fit), as.numeric(test_data[,32]))
+nb.roc.perf <- performance(nb.pred, "tpr", "fpr")
+```
+
+
+```
+
+
+
